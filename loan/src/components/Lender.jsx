@@ -1,124 +1,149 @@
-import { useContext, useState } from "react";
-import { LoanContext } from "../LoanContext.jsx";
+import { useState, useContext } from "react";
+import { LoanContext } from "../LoanContext";
+import "./Lender.css";
 
 export default function Lender() {
-  const { loans, setLoans, loanOffers, setLoanOffers, currentUser } = useContext(LoanContext);
-  const [offerAmount, setOfferAmount] = useState("");
-  const [offerInterest, setOfferInterest] = useState("");
+  const { loans, setLoans, currentUser } = useContext(LoanContext);
+  const [amount, setAmount] = useState("");
+  const [interestRate, setInterestRate] = useState("");
+  const [duration, setDuration] = useState("");
 
-  if (!currentUser || currentUser.role !== "Lender") {
-    return <p>Please log in as a Lender to access your dashboard.</p>;
-  }
+  if (!currentUser) return <p>Please log in to access your dashboard.</p>;
 
-  // Create a new loan offer
-  const createOffer = () => {
-    if (offerAmount && offerInterest) {
-      setLoanOffers([
-        ...loanOffers,
-        {
-          amount: offerAmount,
-          interest: offerInterest,
-          createdBy: currentUser.name, // tag with lender
-        },
-      ]);
-      setOfferAmount("");
-      setOfferInterest("");
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const monthlyPayment =
+      (parseFloat(amount) * (1 + parseFloat(interestRate) / 100)) / parseInt(duration);
+
+    const payments = Array.from({ length: parseInt(duration) }, (_, i) => ({
+      month: i + 1,
+      amount: parseFloat(monthlyPayment.toFixed(2)),
+      paid: false,
+    }));
+
+    const newLoan = {
+      id: Date.now(),
+      amount: parseFloat(amount),
+      interestRate: parseFloat(interestRate),
+      duration: parseInt(duration),
+      lender: currentUser.name,
+      status: "available",
+      borrower: null,
+      payments,
+    };
+    setLoans([...loans, newLoan]);
+    setAmount("");
+    setInterestRate("");
+    setDuration("");
   };
 
-  // Approve a pending loan
-  const approveLoan = (loanToApprove) => {
-    const newLoans = [...loans];
-    const index = loans.indexOf(loanToApprove);
-    if (index !== -1) {
-      newLoans[index].status = "Approved";
-      setLoans(newLoans);
-    }
-  };
+  // Filter loans to only show those created by the current lender
+  const myLoans = loans.filter((loan) => loan.lender === currentUser.name);
 
-  // Reject a pending loan
-  const rejectLoan = (loanToReject) => {
-    const newLoans = [...loans];
-    const index = loans.indexOf(loanToReject);
-    if (index !== -1) {
-      newLoans[index].status = "Rejected";
-      setLoans(newLoans);
-    }
+  const handleApproval = (loanId, approve) => {
+    setLoans(
+      loans.map((loan) =>
+        loan.id === loanId
+          ? { ...loan, status: approve ? "approved" : "rejected" }
+          : loan
+      )
+    );
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Lender Dashboard</h2>
-      <p>Welcome, {currentUser.name}!</p>
+    <div className="lender-container">
+      <div className="lender-content">
+        <section className="offer-loan-section">
+          <h2 className="section-title">Offer New Loan</h2>
+          <form onSubmit={handleSubmit}>
+            <input
+              type="number"
+              placeholder="Amount (₹)"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+            />
+            <input
+              type="number"
+              placeholder="Interest Rate (%)"
+              value={interestRate}
+              onChange={(e) => setInterestRate(e.target.value)}
+              required
+            />
+            <input
+              type="number"
+              placeholder="Duration (months)"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              required
+            />
+            <button type="submit">Offer Loan</button>
+          </form>
+        </section>
 
-      {/* Create Loan Offer */}
-      <h3>Create Loan Offer:</h3>
-      <input
-        type="number"
-        placeholder="Amount"
-        value={offerAmount}
-        onChange={(e) => setOfferAmount(e.target.value)}
-      />
-      <input
-        type="number"
-        placeholder="Interest %"
-        value={offerInterest}
-        onChange={(e) => setOfferInterest(e.target.value)}
-      />
-      <button onClick={createOffer}>Create Offer</button>
+        <section className="my-loans-section">
+          <h2 className="section-title">My Loans</h2>
+          <div className="loans-grid">
+            {myLoans.length > 0 ? (
+              myLoans.map((loan) => (
+                <div key={loan.id} className="loan-card">
+                  <div className="loan-detail">
+                    <span className="detail-label">Amount:</span>
+                    <span className="detail-value">₹{loan.amount}</span>
+                  </div>
+                  <div className="loan-detail">
+                    <span className="detail-label">Interest:</span>
+                    <span className="detail-value">{loan.interestRate}%</span>
+                  </div>
+                  <div className="loan-detail">
+                    <span className="detail-label">Duration:</span>
+                    <span className="detail-value">{loan.duration} months</span>
+                  </div>
+                  <div className="loan-detail">
+                    <span className="detail-label">Status:</span>
+                    <span className={`status-badge ${loan.status}`}>
+                      {loan.status}
+                    </span>
+                  </div>
+                  <div className="loan-detail">
+                    <span className="detail-label">Borrower:</span>
+                    <span className="detail-value">{loan.borrower || "N/A"}</span>
+                  </div>
 
-      {/* Display Loan Offers */}
-      <h3 style={{ marginTop: "20px" }}>My Loan Offers:</h3>
-      <ul>
-        {loanOffers
-          .filter((offer) => offer.createdBy === currentUser.name)
-          .map((offer, index) => (
-            <li key={index}>
-              Amount: {offer.amount}, Interest: {offer.interest}%
-            </li>
-          ))}
-      </ul>
+                  {loan.status === "requested" && (
+                    <div className="approval-buttons">
+                      <button onClick={() => handleApproval(loan.id, true)}>Approve</button>
+                      <button onClick={() => handleApproval(loan.id, false)}>Reject</button>
+                    </div>
+                  )}
 
-      {/* Display Loan Applications */}
-      <h3 style={{ marginTop: "20px" }}>Loan Applications from Borrowers:</h3>
-      {loans.filter((l) => l.lender === currentUser.name).length === 0 ? (
-        <p>No loan applications yet.</p>
-      ) : (
-        loans
-          .filter((loan) => loan.lender === currentUser.name)
-          .map((loan) => (
-            <div
-              key={loan.borrower + loan.amount}
-              style={{ border: "1px solid gray", padding: "10px", marginBottom: "10px" }}
-            >
-              <p>
-                Borrower: {loan.borrower} | Amount: {loan.amount} | Interest: {loan.interest}% | Status: {loan.status}
-              </p>
-
-              {/* Approve/Reject buttons only for pending */}
-              {loan.status === "Pending" && (
-                <>
-                  <button onClick={() => approveLoan(loan)}>Approve</button>
-                  <button onClick={() => rejectLoan(loan)}>Reject</button>
-                </>
-              )}
-
-              {/* Payment Status */}
-              {loan.status === "Approved" && (
-                <div>
-                  <h4>Payment Status:</h4>
-                  <ul>
-                    {loan.payments.map((p, i) => (
-                      <li key={i}>
-                        Month {i + 1}: {p.paid ? "Paid" : "Pending"}
-                      </li>
-                    ))}
-                  </ul>
+                  {/* Only show payment tracker for approved loans */}
+                  {loan.status === "approved" && loan.borrower && loan.payments && (
+                    <div className="payment-tracker">
+                      <h4>Payment Status:</h4>
+                      <div className="payments-grid">
+                        {loan.payments.map((p, i) => (
+                          <div key={i} className={`payment-item ${p.paid ? 'paid' : 'pending'}`}>
+                            <span>Month {p.month}</span>
+                            <span>₹{p.amount}</span>
+                            <span className="payment-status">
+                              {p.paid ? '✅ Paid' : '⏳ Pending'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))
-      )}
+              ))
+            ) : (
+              <div className="no-loans-message">
+                <p>You haven't created any loans yet.</p>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

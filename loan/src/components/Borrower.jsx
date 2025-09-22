@@ -1,113 +1,158 @@
-import { useContext, useState } from "react";
-import { LoanContext } from "../LoanContext.jsx";
+import { useContext } from "react";
+import { LoanContext } from "../LoanContext";
+import "./Borrower.css";
 
 export default function Borrower() {
-  const { loans, setLoans, loanOffers, currentUser } = useContext(LoanContext);
-  const [selectedOfferIndex, setSelectedOfferIndex] = useState(null);
+  const { loans, setLoans, currentUser } = useContext(LoanContext);
 
-  if (!currentUser || currentUser.role !== "Borrower") {
-    return <p>Please log in as a Borrower to access your dashboard.</p>;
-  }
+  if (!currentUser) return <p>Please log in to access your dashboard.</p>;
 
-  // Apply for selected offer
-  const applyLoan = () => {
-    if (selectedOfferIndex !== null) {
-      const offer = loanOffers[selectedOfferIndex];
-      const newLoan = {
-        borrower: currentUser.name,
-        amount: offer.amount,
-        interest: offer.interest,
-        lender: offer.createdBy, // ✅ attach lender info
-        status: "Pending",
-        payments: Array.from({ length: 12 }, () => ({ paid: false })), // ✅ avoid shared references
-      };
-      setLoans([...loans, newLoan]);
-      setSelectedOfferIndex(null);
-    }
+  // Request a loan
+  const handleRequest = (loanId) => {
+    setLoans(
+      loans.map((loan) =>
+        loan.id === loanId
+          ? {
+              ...loan,
+              status: "requested",
+              borrower: currentUser.name,
+            }
+          : loan
+      )
+    );
   };
 
+  // Pay a monthly installment
+  const handlePayment = (loanId, monthIndex) => {
+    setLoans(
+      loans.map((loan) => {
+        if (loan.id === loanId) {
+          const updatedPayments = loan.payments.map((p, i) =>
+            i === monthIndex ? { ...p, paid: true } : p
+          );
+          const allPaid = updatedPayments.every((p) => p.paid);
+          return {
+            ...loan,
+            payments: updatedPayments,
+            status: allPaid ? "completed" : loan.status,
+          };
+        }
+        return loan;
+      })
+    );
+  };
+
+  const availableLoans = loans.filter(
+    (loan) => loan.status === "available" && loan.lender !== currentUser.name
+  );
+
+  const myLoans = loans.filter((loan) => loan.borrower === currentUser.name);
+
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Borrower Dashboard</h2>
-      <p>Welcome, {currentUser.name}!</p>
+    <div className="borrower-container">
+      <div className="borrower-content">
+        <section className="available-loans-section">
+          <h2 className="section-title">Available Loans</h2>
+          <div className="loans-grid">
+            {availableLoans.length > 0 ? (
+              availableLoans.map((loan) => (
+                <div key={loan.id} className="loan-card">
+                  <div className="loan-header">
+                    <span className="lender-name">From: {loan.lender}</span>
+                    <span className="loan-amount">₹{loan.amount}</span>
+                  </div>
+                  <div className="loan-details">
+                    <div className="detail-item">
+                      <span className="detail-label">Interest Rate</span>
+                      <span className="detail-value">{loan.interestRate}%</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Duration</span>
+                      <span className="detail-value">{loan.duration} months</span>
+                    </div>
+                    <button
+                      className="request-button"
+                      onClick={() => handleRequest(loan.id)}
+                    >
+                      Request Loan
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="no-loans-message">
+                <p>No loans are currently available.</p>
+              </div>
+            )}
+          </div>
+        </section>
 
-      {/* Available Offers */}
-      <h3>Available Loan Offers:</h3>
-      {loanOffers.length === 0 ? (
-        <p>No loan offers available at the moment.</p>
-      ) : (
-        <ul>
-          {loanOffers.map((offer, index) => (
-            <li key={index}>
-              Amount: {offer.amount}, Interest: {offer.interest}%
-              <button
-                style={{ marginLeft: "10px" }}
-                onClick={() => setSelectedOfferIndex(index)}
-              >
-                Select Offer
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+        <section className="my-loans-section">
+          <h2 className="section-title">My Loans</h2>
+          <div className="loans-grid">
+            {myLoans.length > 0 ? (
+              myLoans.map((loan) => (
+                <div key={loan.id} className="loan-card">
+                  <div className="loan-header">
+                    <span className="lender-name">From: {loan.lender}</span>
+                    <span className="loan-amount">₹{loan.amount}</span>
+                  </div>
+                  <div className="loan-details">
+                    <div className="detail-item">
+                      <span className="detail-label">Interest Rate</span>
+                      <span className="detail-value">{loan.interestRate}%</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Duration</span>
+                      <span className="detail-value">{loan.duration} months</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Status</span>
+                      <span className={`status-badge ${loan.status}`}>
+                        {loan.status}
+                      </span>
+                    </div>
+                  </div>
 
-      {/* Selected Offer */}
-      {selectedOfferIndex !== null && (
-        <div style={{ marginTop: "10px" }}>
-          <p>
-            Selected Offer → Amount: {loanOffers[selectedOfferIndex].amount},
-            Interest: {loanOffers[selectedOfferIndex].interest}%
-          </p>
-          <button onClick={applyLoan}>Apply for this Loan</button>
-        </div>
-      )}
-
-      {/* Your Loan Applications */}
-      <h3 style={{ marginTop: "20px" }}>Your Loan Applications:</h3>
-      {loans.filter((l) => l.borrower === currentUser.name).length === 0 ? (
-        <p>No loans applied yet.</p>
-      ) : (
-        loans
-          .filter((l) => l.borrower === currentUser.name)
-          .map((loan, idx) => (
-            <div
-              key={idx}
-              style={{
-                border: "1px solid gray",
-                padding: "10px",
-                marginBottom: "10px",
-              }}
-            >
-              <p>
-                Amount: {loan.amount}, Interest: {loan.interest}%, Status:{" "}
-                {loan.status}
-              </p>
-
-              {/* Payment Schedule */}
-              <h4>Payment Schedule:</h4>
-              <ul>
-                {loan.payments.map((p, i) => (
-                  <li key={i}>
-                    Month {i + 1}: {p.paid ? "Paid" : "Pending"}
-                    {!p.paid && loan.status === "Approved" && (
-                      <button
-                        style={{ marginLeft: "10px" }}
-                        onClick={() => {
-                          const newLoans = [...loans];
-                          const loanIndex = loans.indexOf(loan);
-                          newLoans[loanIndex].payments[i].paid = true;
-                          setLoans(newLoans);
-                        }}
-                      >
-                        Pay
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))
-      )}
+                  {loan.status === "approved" && loan.payments && (
+                    <div className="payments-section">
+                      <h4>Monthly Payments</h4>
+                      <div className="payments-grid">
+                        {loan.payments.map((payment, index) => (
+                          <div
+                            key={index}
+                            className={`payment-item ${
+                              payment.paid ? "paid" : "pending"
+                            }`}
+                          >
+                            <span>Month {payment.month}</span>
+                            <span>₹{payment.amount}</span>
+                            {!payment.paid && (
+                              <button
+                                className="pay-button"
+                                onClick={() => handlePayment(loan.id, index)}
+                              >
+                                Pay Now
+                              </button>
+                            )}
+                            {payment.paid && (
+                              <span className="payment-status">✅ Paid</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="no-loans-message">
+                <p>You haven't borrowed any loans yet.</p>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
