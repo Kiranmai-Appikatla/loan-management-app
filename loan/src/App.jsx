@@ -9,6 +9,7 @@ import Borrower from "./components/Borrower.jsx";
 import Lender from "./components/Lender.jsx";
 import Admin from "./components/Admin.jsx";
 import Analyst from "./components/Analyst.jsx";
+import Home from "./components/Home.jsx";
 
 export default function App() {
   return (
@@ -26,8 +27,15 @@ function RoutesWrapper() {
 
   return (
     <Routes>
-      {!currentUser && <Route path="*" element={<Login />} />}
-
+       {/* If no user is logged in → show Home and Login */}
+      {!currentUser && (
+        <>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<Home />} />
+        </>
+      )}
+      {/* If logged in → go to their dashboard */}
       {currentUser && currentUser.role === "Borrower" && (
         <Route path="*" element={<Borrower />} />
       )}
