@@ -1,9 +1,13 @@
 import { useState, useContext } from "react";
 import { LoanContext } from "../LoanContext";
 import "./Lender.css";
+import { useNavigate } from "react-router-dom";
 
 export default function Lender() {
-  const { loans, setLoans, currentUser } = useContext(LoanContext);
+  const navigate = useNavigate();
+
+  const { loans = [], setLoans, currentUser } = useContext(LoanContext) || {};
+
   const [amount, setAmount] = useState("");
   const [interestRate, setInterestRate] = useState("");
   const [duration, setDuration] = useState("");
@@ -12,14 +16,6 @@ export default function Lender() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const monthlyPayment =
-      (parseFloat(amount) * (1 + parseFloat(interestRate) / 100)) / parseInt(duration);
-
-    const payments = Array.from({ length: parseInt(duration) }, (_, i) => ({
-      month: i + 1,
-      amount: parseFloat(monthlyPayment.toFixed(2)),
-      paid: false,
-    }));
 
     const newLoan = {
       id: Date.now(),
@@ -28,31 +24,87 @@ export default function Lender() {
       duration: parseInt(duration),
       lender: currentUser.name,
       status: "available",
-      borrower: null,
-      payments,
+      requests: [],
     };
+
     setLoans([...loans, newLoan]);
     setAmount("");
     setInterestRate("");
     setDuration("");
   };
 
-  // Filter loans to only show those created by the current lender
-  const myLoans = loans.filter((loan) => loan.lender === currentUser.name);
-
-  const handleApproval = (loanId, approve) => {
+  const handleApproval = (loanId, borrowerName, approve) => {
     setLoans(
-      loans.map((loan) =>
-        loan.id === loanId
-          ? { ...loan, status: approve ? "approved" : "rejected" }
-          : loan
-      )
+      loans.map((loan) => {
+        if (loan.id === loanId) {
+          return {
+            ...loan,
+            requests: loan.requests.map((req) =>
+              req.borrowerName === borrowerName
+                ? {
+                    ...req,
+                    status: approve ? "approved" : "rejected",
+                    payments: approve
+                      ? req.payments || [
+                          { month: 1, amount: 1000, paid: false },
+                          { month: 2, amount: 1000, paid: false },
+                        ]
+                      : [],
+                  }
+                : req
+            ),
+          };
+        }
+        return loan;
+      })
     );
   };
 
+  const myLoanOffers = loans.filter((loan) => loan.lender === currentUser.name);
+
+  const allPendingRequests = myLoanOffers.flatMap((loan) =>
+    loan.requests
+      ?.filter((req) => req.status === "requested")
+      .map((req) => ({
+        ...req,
+        loanId: loan.id,
+        loanAmount: loan.amount,
+        loanRate: loan.interestRate,
+        loanDuration: loan.duration,
+      })) || []
+  );
+
+  const renderPayments = (payments = []) => (
+    <div className="payment-tracker">
+      <h4>Payment Status:</h4>
+      <div className="payments-grid">
+        {payments.map((p, i) => (
+          <div key={i} className={`payment-item ${p.paid ? "paid" : "pending"}`}>
+            <span>Month {p.month}</span>
+            <span>₹{p.amount}</span>
+            <span className="payment-status">{p.paid ? "✅ Paid" : "⏳ Pending"}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="lender-container">
+
+      {/* Header */}
+      <header className="dashboard-header">
+        <h1>Welcome, {currentUser.name}</h1>
+        <p>Your Lender Dashboard</p>
+
+        <button className="home-btn" onClick={() => navigate("/")}>
+          🏠 Home
+        </button>
+      </header>
+
       <div className="lender-content">
+
+        {/* Offer Loan */}
         <section className="offer-loan-section">
           <h2 className="section-title">Offer New Loan</h2>
           <form onSubmit={handleSubmit}>
@@ -81,68 +133,90 @@ export default function Lender() {
           </form>
         </section>
 
+        {/* Pending Requests */}
         <section className="my-loans-section">
-          <h2 className="section-title">My Loans</h2>
+          <h2 className="section-title">
+            Pending Borrower Requests ({allPendingRequests.length})
+          </h2>
+
           <div className="loans-grid">
-            {myLoans.length > 0 ? (
-              myLoans.map((loan) => (
-                <div key={loan.id} className="loan-card">
-                  <div className="loan-detail">
-                    <span className="detail-label">Amount:</span>
-                    <span className="detail-value">₹{loan.amount}</span>
-                  </div>
-                  <div className="loan-detail">
-                    <span className="detail-label">Interest:</span>
-                    <span className="detail-value">{loan.interestRate}%</span>
-                  </div>
-                  <div className="loan-detail">
-                    <span className="detail-label">Duration:</span>
-                    <span className="detail-value">{loan.duration} months</span>
-                  </div>
-                  <div className="loan-detail">
-                    <span className="detail-label">Status:</span>
-                    <span className={`status-badge ${loan.status}`}>
-                      {loan.status}
-                    </span>
-                  </div>
+            {allPendingRequests.length > 0 ? (
+              allPendingRequests.map((req) => (
+                <div key={req.borrowerName} className="loan-card requested-card">
                   <div className="loan-detail">
                     <span className="detail-label">Borrower:</span>
-                    <span className="detail-value">{loan.borrower || "N/A"}</span>
+                    <span className="detail-value">{req.borrowerName}</span>
                   </div>
 
-                  {loan.status === "requested" && (
-                    <div className="approval-buttons">
-                      <button onClick={() => handleApproval(loan.id, true)}>Approve</button>
-                      <button onClick={() => handleApproval(loan.id, false)}>Reject</button>
-                    </div>
-                  )}
+                  <div className="loan-detail">
+                    <span className="detail-label">Amount:</span>
+                    <span className="detail-value">₹{req.loanAmount}</span>
+                  </div>
 
-                  {/* Only show payment tracker for approved loans */}
-                  {loan.status === "approved" && loan.borrower && loan.payments && (
-                    <div className="payment-tracker">
-                      <h4>Payment Status:</h4>
-                      <div className="payments-grid">
-                        {loan.payments.map((p, i) => (
-                          <div key={i} className={`payment-item ${p.paid ? 'paid' : 'pending'}`}>
-                            <span>Month {p.month}</span>
-                            <span>₹{p.amount}</span>
-                            <span className="payment-status">
-                              {p.paid ? '✅ Paid' : '⏳ Pending'}
+                  <div className="loan-detail">
+                    <span className="detail-label">Rate:</span>
+                    <span className="detail-value">{req.loanRate}%</span>
+                  </div>
+
+                  <div className="approval-buttons">
+                    <button onClick={() => handleApproval(req.loanId, req.borrowerName, true)}>
+                      Approve
+                    </button>
+                    <button onClick={() => handleApproval(req.loanId, req.borrowerName, false)}>
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="no-loans-message">
+                <p>No new requests.</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Loan History */}
+        <section className="my-loans-section">
+          <h2 className="section-title">Loan History & Tracking</h2>
+
+          <div className="loans-grid">
+            {myLoanOffers.length > 0 ? (
+              myLoanOffers.map((loan) => (
+                <div key={loan.id} className="loan-card">
+                  <h3 className="loan-card-title">
+                    Offer ID: {loan.id} • ₹{loan.amount}
+                  </h3>
+
+                  {/* Borrower Grid */}
+                  {(loan.requests || []).length > 0 ? (
+                    <div className="borrower-grid">
+                      {loan.requests.map((req, index) => (
+                        <div key={index} className="borrower-card">
+                          <div className="borrower-header">
+                            <span className="borrower-name">{req.borrowerName}</span>
+                            <span className={`status-badge ${req.status}`}>
+                              {req.status}
                             </span>
                           </div>
-                        ))}
-                      </div>
+
+                          {req.status === "approved" && renderPayments(req.payments)}
+                        </div>
+                      ))}
                     </div>
+                  ) : (
+                    <p>No requests yet.</p>
                   )}
                 </div>
               ))
             ) : (
               <div className="no-loans-message">
-                <p>You haven't created any loans yet.</p>
+                <p>No loan offers yet.</p>
               </div>
             )}
           </div>
         </section>
+
       </div>
     </div>
   );

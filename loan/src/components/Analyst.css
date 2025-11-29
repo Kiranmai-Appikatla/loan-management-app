@@ -1,127 +1,196 @@
-.analyst-container {
+/* Analyst.css - upgraded */
+
+.analyst-root {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
   padding: 2rem;
+  font-family: "Segoe UI", sans-serif;
+  color: #222;
 }
 
-.analyst-content {
+.analyst-inner {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.section-title {
-  color: #333;
-  margin-bottom: 2rem;
-  font-size: 1.75rem;
-  font-weight: 600;
+.analyst-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
+.section-title {
+  font-size: 1.6rem;
+  color: #0b63b5;
+  margin: 0;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.analyst-actions .export-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.analyst-actions .export-btn:hover { background: #155fa8; }
+
+/* Stat cards */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
 }
 
 .stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(10, 40, 80, 0.04);
   text-align: center;
-  transition: transform 0.2s ease;
+}
+.stat-title { color: #666; font-weight: 600; font-size: 0.95rem; }
+.stat-value { font-size: 1.4rem; color: #123; font-weight: 800; margin-top: 0.4rem; }
+
+/* Charts + filters layout */
+.charts-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
+.charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 
-.stat-title {
-  color: #666;
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+.chart-card {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(10, 40, 80, 0.04);
+}
+.chart-title { margin: 0 0 0.6rem 0; color: #1976d2; font-weight: 700; }
+
+/* Filters */
+.filters-card {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(10, 40, 80, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
-.stat-value {
-  color: #333;
-  font-size: 1.75rem;
-  font-weight: 600;
+.filter-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
+.search-input {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #e1e7ef;
+  flex: 1;
+}
+
+.filters-card select {
+  padding: 0.45rem;
+  border-radius: 8px;
+  border: 1px solid #e1e7ef;
+  margin-left: 0.5rem;
+}
+
+.filter-hint { color: #666; font-size: 0.9rem; margin-top: 0.5rem; }
+
+/* Loans table */
 .loans-table-container {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(10, 40, 80, 0.04);
 }
 
 .table-title {
+  margin: 0 0 0.75rem;
   color: #333;
-  margin-bottom: 1.5rem;
-  font-size: 1.25rem;
-  font-weight: 500;
+  font-weight: 700;
 }
 
-.loans-table {
-  overflow-x: auto;
-}
+.loans-table { overflow-x: auto; }
 
 table {
   width: 100%;
   border-collapse: collapse;
 }
-
 th {
-  background: #f8f9fa;
-  padding: 1rem;
+  background: #fbfcfe;
+  padding: 0.85rem;
   text-align: left;
-  font-weight: 500;
-  color: #666;
-  border-bottom: 2px solid #eee;
+  font-weight: 700;
+  color: #444;
+  border-bottom: 1px solid #eef3f9;
 }
-
 td {
-  padding: 1rem;
-  border-bottom: 1px solid #eee;
+  padding: 0.75rem;
+  border-bottom: 1px solid #f4f7fb;
   color: #333;
 }
-
-tr:hover {
-  background: #f8f9fa;
-}
+tr:hover { background: #fbfcfe; }
 
 .status-badge {
-  padding: 0.25rem 0.75rem;
+  padding: 0.25rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: capitalize;
+}
+.status-badge.available { background: #e3f2fd; color: #1565c0; }
+.status-badge.requested { background: #fff3e0; color: #ef6c00; }
+.status-badge.approved { background: #e8f5e9; color: #2e7d32; }
+.status-badge.completed { background: #dcfce7; color: #166534; }
+.status-badge.rejected { background: #ffebee; color: #c62828; }
+
+/* empty row */
+.empty-row { text-align: center; padding: 1.25rem; color: #666; }
+
+/* Responsive */
+@media (max-width: 980px) {
+  .charts-filters { grid-template-columns: 1fr; }
+  .charts { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .filter-row { flex-direction: column; align-items: stretch; }
+}
+.home-btn {
+  background: #6a5acd;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: 0.2s ease;
 }
 
-.status-badge.available {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.status-badge.taken {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-@media (max-width: 768px) {
-  .analyst-container {
-    padding: 1rem;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .loans-table-container {
-    padding: 1rem;
-  }
-
-  th, td {
-    padding: 0.75rem;
-  }
+.home-btn:hover {
+  background: #5c4baf;
+  transform: translateY(-2px);
 }
