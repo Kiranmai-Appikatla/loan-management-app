@@ -1,16 +1,17 @@
-// NO CHANGES NEEDED in Login.jsx. 
-// The existing structure will be styled by the new CSS below.
-
 import { useState, useContext } from "react";
 import { LoanContext } from "../LoanContext.jsx";
+import { useNavigate } from "react-router-dom";   // ✅ Added navigate
 import "./Login.css";
 
-export default function Login() {
+export default function Login({ isRegisterMode = false, hideSwitch = false }) {
   const { users, setUsers, setCurrentUser } = useContext(LoanContext);
   const [name, setName] = useState("");
   const [role, setRole] = useState("Borrower");
   const [password, setPassword] = useState("");
-  const [isRegister, setIsRegister] = useState(true);
+  const [isRegister, setIsRegister] = useState(isRegisterMode);
+
+
+  const navigate = useNavigate(); // ✅ Create navigate function
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -19,13 +20,13 @@ export default function Login() {
     const trimmedPassword = password.trim();
 
     if (isRegister) {
-      // 🧾 Check for empty fields
+      // 🧾 Empty fields check
       if (!trimmedName || !trimmedPassword) {
         alert("Name and password cannot be empty for registration!");
         return;
       }
 
-      // 🧾 Check if user already exists (case-insensitive)
+      // 🧾 Check if user already exists
       const exists = users.some(
         (u) => u.name.toLowerCase() === trimmedName.toLowerCase()
       );
@@ -34,15 +35,29 @@ export default function Login() {
         return;
       }
 
-      // 🧾 Add new user
+      // 🧾 Register new user
       const newUser = { name: trimmedName, role, password: trimmedPassword };
       setUsers([...users, newUser]);
       setCurrentUser(newUser);
       alert(`User "${trimmedName}" registered successfully as a ${role}!`);
+
       setName("");
       setPassword("");
-    } else {
-      // ✅ LOGIN LOGIC: Only checks name + password
+
+      // ⭐ Redirect based on role
+      navigate(
+        role === "Borrower"
+          ? "/borrower"
+          : role === "Lender"
+          ? "/lender"
+          : role === "Admin"
+          ? "/admin"
+          : "/analyst"
+      );
+    } 
+    
+    else {
+      // ✅ LOGIN LOGIC
       const user = users.find(
         (u) =>
           u.name.toLowerCase() === trimmedName.toLowerCase() &&
@@ -54,6 +69,17 @@ export default function Login() {
         alert(`Welcome ${user.name} (${user.role})!`);
         setName("");
         setPassword("");
+
+        // ⭐ Redirect based on role
+        navigate(
+          user.role === "Borrower"
+            ? "/borrower"
+            : user.role === "Lender"
+            ? "/lender"
+            : user.role === "Admin"
+            ? "/admin"
+            : "/analyst"
+        );
       } else {
         alert("User not found or wrong credentials (Name and Password mismatch).");
       }
@@ -101,7 +127,6 @@ export default function Login() {
                 <option value="Analyst">Analyst</option>
               </select>
             ) : (
-              // Info text for login mode
               <p className="login-info-text">
                 Logging in will determine your role automatically.
               </p>
@@ -113,15 +138,18 @@ export default function Login() {
           </button>
         </form>
 
-        <button
-          type="button"
-          className="switch-button"
-          onClick={() => setIsRegister(!isRegister)}
-        >
-          {isRegister
-            ? "Already have an account? Login"
-            : "No account? Register"}
-        </button>
+        {!hideSwitch && (
+  <button
+    type="button"
+    className="switch-button"
+    onClick={() => setIsRegister(!isRegister)}
+  >
+    {isRegister
+      ? "Already have an account? Login"
+      : "No account? Register"}
+  </button>
+)}
+
       </div>
     </div>
   );

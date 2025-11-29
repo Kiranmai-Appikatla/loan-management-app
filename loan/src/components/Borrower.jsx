@@ -1,15 +1,17 @@
 import { useContext } from "react";
 import { LoanContext } from "../LoanContext";
 import "./Borrower.css";
+import { useNavigate } from "react-router-dom";
 
 export default function Borrower() {
+  const navigate = useNavigate(); // ✅ put this here
   const { loans, setLoans, currentUser } = useContext(LoanContext);
 
   if (!currentUser) return <p>Please log in to access your dashboard.</p>;
 
   const calculateMonthlyPayment = (amt, rate, dur) => {
     const duration = parseInt(dur);
-    if (!duration || duration <= 0) return 0; // Prevent NaN or division by 0
+    if (!duration || duration <= 0) return 0;
     const totalAmount = parseFloat(amt) * (1 + parseFloat(rate) / 100);
     return totalAmount / duration;
   };
@@ -85,7 +87,6 @@ export default function Borrower() {
     );
   };
 
-  // Available loans: only those not yet requested by this borrower
   const availableLoans = loans.filter((loan) => {
     const requests = loan.requests || [];
     const alreadyRequested = requests.some(
@@ -94,7 +95,6 @@ export default function Borrower() {
     return loan.status === "available" && !alreadyRequested;
   });
 
-  // Gather all loans related to this borrower
   const myLoanStatuses = loans.flatMap((loan) =>
     (loan.requests || [])
       .filter((req) => req.borrowerName === currentUser.name)
@@ -122,6 +122,11 @@ export default function Borrower() {
       <header className="dashboard-header">
         <h1>Welcome, {currentUser.name}</h1>
         <p>Your personalized Borrower Dashboard</p>
+
+        {/* ✅ Home Button */}
+        <button className="home-btn" onClick={() => navigate("/")}>
+          🏠 Home
+        </button>
       </header>
 
       {/* Available Loans */}
@@ -224,7 +229,6 @@ export default function Borrower() {
                   </span>
                 </div>
 
-                {/* Payment Section */}
                 {loan.overallStatus !== "completed" && loan.payments && (
                   <div className="payments">
                     <h4>Monthly Payments</h4>

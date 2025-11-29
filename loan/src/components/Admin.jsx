@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { LoanContext } from "../LoanContext.jsx";
 import "./Admin.css";
+import { useNavigate } from "react-router-dom";
 
 // Helper component for the Edit Modal
 const EditUserModal = ({ user, index, onSave, onClose }) => {
@@ -64,6 +65,7 @@ const EditUserModal = ({ user, index, onSave, onClose }) => {
 };
 
 export default function Admin() {
+  const navigate = useNavigate();
   const { users = [], setUsers, setLoans, setLoanOffers } = useContext(LoanContext);
   const [name, setName] = useState("");
   const [role, setRole] = useState("Borrower");
@@ -143,102 +145,138 @@ export default function Admin() {
     }
   };
 
-  return (
-    <div className="admin-container">
-      <div className="admin-content">
-        <section className="admin-section">
-          <h2 className="section-title">Admin Dashboard</h2>
+ return (
+  <div className="admin-container">
+    
+    {/* ✅ ADMIN DASHBOARD HEADER */}
+    <header className="dashboard-header">
+      <h1>Welcome, Admin</h1>
+      <p>Manage Users, System Status, & Loan Data</p>
 
-          <div className="system-control-panel">
-            <h3 className="panel-title">System Control</h3>
-            <div className="status-toggle-group">
-              <span className="status-label">System Status:</span>
-              <span className={`system-status-badge ${systemStatus.toLowerCase()}`}>{systemStatus}</span>
-              <button
-                className={`toggle-button ${systemStatus === "Open" ? "maintenance" : "open"}`}
-                onClick={() => setSystemStatus(systemStatus === "Open" ? "Maintenance" : "Open")}
-              >
-                Switch to {systemStatus === "Open" ? "Maintenance" : "Open"}
-              </button>
-            </div>
-            <p className="system-hint">
-              In <strong>Maintenance</strong> mode, users cannot create new loan offers or send requests.
-            </p>
+      <button className="home-btn" onClick={() => navigate("/")}>
+        🏠 Home
+      </button>
+    </header>
+
+    <div className="admin-content">
+      <section className="admin-section">
+        <h2 className="section-title">Admin Dashboard</h2>
+
+        {/* System Control Panel */}
+        <div className="system-control-panel">
+          <h3 className="panel-title">System Control</h3>
+          <div className="status-toggle-group">
+            <span className="status-label">System Status:</span>
+            <span className={`system-status-badge ${systemStatus.toLowerCase()}`}>
+              {systemStatus}
+            </span>
+            <button
+              className={`toggle-button ${systemStatus === "Open" ? "maintenance" : "open"}`}
+              onClick={() =>
+                setSystemStatus(systemStatus === "Open" ? "Maintenance" : "Open")
+              }
+            >
+              Switch to {systemStatus === "Open" ? "Maintenance" : "Open"}
+            </button>
           </div>
+          <p className="system-hint">
+            In <strong>Maintenance</strong> mode, users cannot create new loan offers or send requests.
+          </p>
+        </div>
 
-          <div className="add-user-panel">
-            <h3 className="panel-title">Add New User</h3>
-            <div className="input-group">
-              <input
-                className="admin-input"
-                placeholder="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <input
-                type="password"
-                className="admin-input"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <select
-                className="admin-select"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <option value="Borrower">Borrower</option>
-                <option value="Lender">Lender</option>
-                <option value="Analyst">Analyst</option>
-              </select>
-              <button className="add-button" onClick={addUser}>Add User</button>
-            </div>
+        {/* Add User Panel */}
+        <div className="add-user-panel">
+          <h3 className="panel-title">Add New User</h3>
+          <div className="input-group">
+            <input
+              className="admin-input"
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <input
+              type="password"
+              className="admin-input"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <select
+              className="admin-select"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="Borrower">Borrower</option>
+              <option value="Lender">Lender</option>
+              <option value="Analyst">Analyst</option>
+              <option value="Admin">Admin</option>
+            </select>
+            <button className="add-button" onClick={addUser}>Add User</button>
           </div>
+        </div>
 
-          <div className="users-panel">
-            <h3 className="panel-title">User Management</h3>
-            <div className="users-list">
-              {users.length > 0 ? (
-                users.map((user, index) => (
-                  <div key={user.name} className="user-card">
-                    <div className="user-info">
-                      <span className="user-name">{user.name}</span>
-                      <span className={`role-badge ${user.role.toLowerCase()}`}>{user.role}</span>
-                    </div>
-                    <div className="user-actions">
-                      <button className="edit-button" onClick={() => setEditingUser({ user, index })}>Edit</button>
-                      <button
-                        className="remove-button"
-                        onClick={() => removeUser(index)}
-                        disabled={user.role === "Admin"}
-                        title={user.role === "Admin" ? "Cannot remove Admin" : "Remove user"}
-                      >
-                        Remove
-                      </button>
-                    </div>
+        {/* User Management */}
+        <div className="users-panel">
+          <h3 className="panel-title">User Management</h3>
+          <div className="users-list">
+            {users.length > 0 ? (
+              users.map((user, index) => (
+                <div key={user.name} className="user-card">
+                  <div className="user-info">
+                    <span className="user-name">{user.name}</span>
+                    <span className={`role-badge ${user.role.toLowerCase()}`}>
+                      {user.role}
+                    </span>
                   </div>
-                ))
-              ) : (
-                <p>No users found.</p>
-              )}
-            </div>
-          </div>
 
-          <div className="actions-panel">
-            <h3 className="panel-title">Data Management</h3>
-            <button className="danger-button" onClick={clearAllData}>Clear All Loan Data</button>
+                  <div className="user-actions">
+                    <button
+                      className="edit-button"
+                      onClick={() => setEditingUser({ user, index })}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="remove-button"
+                      onClick={() => removeUser(index)}
+                      disabled={user.role === "Admin"}
+                      title={
+                        user.role === "Admin"
+                          ? "Cannot remove Admin"
+                          : "Remove user"
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>No users found.</p>
+            )}
           </div>
-        </section>
-      </div>
+        </div>
 
-      {editingUser && (
-        <EditUserModal
-          user={editingUser.user}
-          index={editingUser.index}
-          onSave={saveUserChanges}
-          onClose={() => setEditingUser(null)}
-        />
-      )}
+        {/* Data Management */}
+        <div className="actions-panel">
+          <h3 className="panel-title">Data Management</h3>
+          <button className="danger-button" onClick={clearAllData}>
+            Clear All Loan Data
+          </button>
+        </div>
+      </section>
     </div>
-  );
+
+    {/* Edit Modal */}
+    {editingUser && (
+      <EditUserModal
+        user={editingUser.user}
+        index={editingUser.index}
+        onSave={saveUserChanges}
+        onClose={() => setEditingUser(null)}
+      />
+    )}
+  </div>
+);
+
 }

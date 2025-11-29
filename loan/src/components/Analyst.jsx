@@ -14,8 +14,11 @@ import {
   Legend,
 } from "recharts";
 import "./Analyst.css";
+import { useNavigate } from "react-router-dom";
 
 export default function Analyst() {
+  const navigate = useNavigate();
+
   const { loans } = useContext(LoanContext);
 
   // UI state
@@ -202,17 +205,25 @@ export default function Analyst() {
   return (
     <div className="analyst-root">
       <div className="analyst-inner">
-        <header className="analyst-header">
-          <div>
-            <h2 className="section-title">Loan Analytics Dashboard</h2>
-            <p className="subtitle">Snapshot & detailed view of system loans</p>
-          </div>
-          <div className="analyst-actions">
-            <button className="export-btn" onClick={() => downloadCSV(filteredLoans)}>
-              Export visible CSV
-            </button>
-          </div>
-        </header>
+       <header className="analyst-header">
+  <div>
+    <h2 className="section-title">Loan Analytics Dashboard</h2>
+    <p className="subtitle">Snapshot & detailed view of system loans</p>
+  </div>
+
+  <div className="analyst-actions">
+    {/* Export CSV button */}
+    <button className="export-btn" onClick={() => downloadCSV(filteredLoans)}>
+      Export visible CSV
+    </button>
+
+    {/* ⭐ New Home Button */}
+    <button className="home-btn" onClick={() => navigate("/")}>
+      🏠 Home
+    </button>
+  </div>
+</header>
+
 
         {/* Stat cards */}
         <div className="stats-grid">

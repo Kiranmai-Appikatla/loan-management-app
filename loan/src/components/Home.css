@@ -206,4 +206,15 @@
   font-size: 1.2rem;
   cursor: pointer;
   color: #666;
+
+}
+html {
+  scroll-behavior: smooth;
+}
+
+.section {
+  padding: 80px 20px;
+  text-align: center;
+  background: #f9f9f9;
+  margin-top: 40px;
 }
